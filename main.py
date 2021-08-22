@@ -24,7 +24,7 @@ def main():
         # This loop handles the simulation screen
         while mainSimulation:
             clock.tick(2)
-            screen.fill(BLACK)
+            screen.fill(BLACK)g
 
             # Events like key presses and mouse movements
             for event in pygame.event.get():
