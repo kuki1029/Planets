@@ -23,10 +23,11 @@ class star:
     # Returns size and update the size based on flicker property
     def returnSize(self):
         if self.flicker and random.randint(0,100) > 60:
-            if self.size == 3:
+
+            if self.size >= 3:
                 self.size = 1
             else:
-                self.size = 3
+                self.size += 1
         return self.size
 
 
