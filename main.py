@@ -1,6 +1,7 @@
 import pygame
 from star_data import star
 from astronomicalObject import astronomicalObject
+from physics import physicsCalc
 import random
 import numpy
 import cv2
@@ -34,7 +35,7 @@ exp = 10 ** 24
 # Dict that holds information about the planets
 # Format is Mass, Radius of planet, Distance from SUn
 planetDict = {
-    'mercury' : [0.33011 * exp, 2439.7, 0.38709893],
+    'mercury': [0.33011 * exp, 2439.7, 0.38709893],
     'venus': [4.8675 * exp, 6051.8, 0.72333199],
     'earth': [5.9724 * exp, 6371, 1],
     'mars': [0.64171 * exp, 3389.5, 1.52366231],
@@ -50,35 +51,37 @@ screen = pygame.display.set_mode((screenWidth, screenHeight), pygame.RESIZABLE)
 clock = pygame.time.Clock()
 
 # Initialize objects from the astronomicalObject class
-sun = astronomicalObject(SUN_MASS, YELLOW, 20, (0, 0), 0)
-mercury = astronomicalObject(planetDict['mercury'][0], GRAY, 8, (0, 0), planetDict['mercury'][2])
-venus = astronomicalObject(planetDict['venus'][0], BROWN, 8, (0, 0), planetDict['venus'][2])
-earth = astronomicalObject(planetDict['earth'][0], BLUE, 8, (0, 0), planetDict['earth'][0])
-mars = astronomicalObject(planetDict['mars'][0], TERRACOTTA, 8, (0, 0), planetDict['mars'][0])
-jupiter = astronomicalObject(planetDict['jupiter'][0], BRASS, 8, (0, 0), planetDict['jupiter'][0])
-saturn = astronomicalObject(planetDict['saturn'][0], CAMEL, 8, (0, 0), planetDict['saturn'][0])
-uranus = astronomicalObject(planetDict['uranus'][0], POWDERBLUE, 8, (0, 0), planetDict['uranus'][0])
-neptune = astronomicalObject(planetDict['neptune'][0], ROYALBLUE, 8, (0, 0), planetDict['neptune'][0])
-pluto = astronomicalObject(planetDict['pluto'][0], CYANBLUE, 8, (0, 0), planetDict['pluto'][0])
+sun = astronomicalObject(SUN_MASS, YELLOW, 20, [0, 0], 0)
+mercury = astronomicalObject(planetDict['mercury'][0], GRAY, 8, [0, 0], planetDict['mercury'][2])
+venus = astronomicalObject(planetDict['venus'][0], BROWN, 8, [0, 0], planetDict['venus'][2])
+earth = astronomicalObject(planetDict['earth'][0], BLUE, 8, [0.000000222879741465499504, 0.000000022879741465499504], planetDict['earth'][2])
+mars = astronomicalObject(planetDict['mars'][0], TERRACOTTA, 8, [0, 0], planetDict['mars'][2])
+jupiter = astronomicalObject(planetDict['jupiter'][0], BRASS, 8, [0, 0], planetDict['jupiter'][2])
+saturn = astronomicalObject(planetDict['saturn'][0], CAMEL, 8, [0, 0], planetDict['saturn'][2])
+uranus = astronomicalObject(planetDict['uranus'][0], POWDERBLUE, 8, [0, 0], planetDict['uranus'][2])
+neptune = astronomicalObject(planetDict['neptune'][0], ROYALBLUE, 8, [0, 0], planetDict['neptune'][2])
+pluto = astronomicalObject(planetDict['pluto'][0], CYANBLUE, 8, [0, 0], planetDict['pluto'][2])
 
-
+# List of all the planetary objects
 spaceObjects = [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, pluto]
+
+# Object from the physics class
+physicsCalculator = physicsCalc()
 
 def main():
     #starList = createStars()
     mainLoop = True
     mainSimulation = True
+    # Makes the glow effect around sun
     image = pygame.Surface((100, 100), pygame.SRCALPHA)
     pygame.draw.circle(image, YELLOW, (50,50), 20)
-
-    print("For tomorrow, add some gravity. fake details abt planets except mass. make to scale version and then version that is made smaller. so calc real pos n then transform that")
 
     # Main loop that handles all the screens
     while mainLoop:
 
         # This loop handles the simulation screen
         while mainSimulation:
-            clock.tick(2)
+            clock.tick(6000)
             screen.fill(SPACEBLACK)
 
             # Events like key presses and mouse movements
@@ -86,45 +89,50 @@ def main():
                 if event.type == pygame.QUIT:
                     mainLoop = False
                     mainSimulation = False
-            #pygame.draw.circle(screen, YELLOW, (screenWidth/2, screenHeight/2), 20)
-            """pygame.draw.circle(screen, GRAY, (screenWidth / 2 + 60, screenHeight / 2), 4)
-            pygame.draw.circle(screen, BROWN, (screenWidth/2 + 100, screenHeight/2), 6)
-            pygame.draw.circle(screen, BLUE, (screenWidth / 2 + 140, screenHeight / 2), 8)
-            pygame.draw.circle(screen, TERRACOTTA, (screenWidth / 2 + 180, screenHeight / 2), 4)
-            pygame.draw.circle(screen, BRASS, (screenWidth / 2 + 220, screenHeight / 2), 14)
-            pygame.draw.circle(screen, CAMEL, (screenWidth / 2 + 260, screenHeight / 2), 12)
-            pygame.draw.circle(screen, POWDERBLUE, (screenWidth / 2 + 300, screenHeight / 2), 10)
-            pygame.draw.circle(screen, ROYALBLUE, (screenWidth / 2 + 340, screenHeight / 2), 10)
-            pygame.draw.circle(screen, CYANBLUE, (screenWidth / 2 + 380, screenHeight / 2), 2)"""
+
             drawSpaceObjects()
-            neon_image = create_neon(image)
+            calculateForces()
             #drawStars(starList)
+
+            # Creates glow effect around sun
+            neon_image = create_neon(image)
             screen.blit(neon_image, neon_image.get_rect(center=screen.get_rect().center),
                         special_flags=pygame.BLEND_PREMULTIPLIED)
             pygame.display.update()
 
 # Draws the planets and any other space objects
 def drawSpaceObjects():
+    # This is the number of pixels between the orbits
     distanceFromSunScaled = 60
     widthOrbits = 40
     for planet in spaceObjects:
+        # Draws the planets except the sun as we already drew it above
         if planet != sun:
             details = planet.returnDrawDetails()
             pos = convertToNotScaleCoords(details, distanceFromSunScaled)
             pygame.draw.circle(screen, details[1], pos, details[2])
             distanceFromSunScaled += widthOrbits
 
-
+# Converts the Au distances to pixel values that are scaled to be easier to view on screen
 def convertToNotScaleCoords(details, distanceFromSun):
     factor = distanceFromSun / details[3]
     screenWidth, screenHeight = pygame.display.get_surface().get_size()
     x = (screenWidth / 2) + (factor * details[0][0])
-    y = (screenHeight / 2) +  (factor * details[0][1])
+    y = (screenHeight / 2) + (factor * details[0][1])
     return (x, y)
 
-
-
-
+# Calculates forces for each of the planets
+def calculateForces():
+    forceX = 0
+    forceY = 0
+    distance = earth.returnDistance()
+    planet = sun
+    angle = earth.returnAngle()
+    force = physicsCalculator.gravForce(earth.returnMass(), planet.returnMass(), distance, angle)
+    forceX += force[0]
+    forceY += force[1]
+    #print([forceX, forceY])
+    earth.calculateChangeInPos([forceX, forceY])
 
 # Initializes the array of star objects
 def createStars():
@@ -172,3 +180,15 @@ def create_neon(surf):
     return bloom_surf
 
 main()
+
+
+#pygame.draw.circle(screen, YELLOW, (screenWidth/2, screenHeight/2), 20)
+"""pygame.draw.circle(screen, GRAY, (screenWidth / 2 + 60, screenHeight / 2), 4)
+            pygame.draw.circle(screen, BROWN, (screenWidth/2 + 100, screenHeight/2), 6)
+            pygame.draw.circle(screen, BLUE, (screenWidth / 2 + 140, screenHeight / 2), 8)
+            pygame.draw.circle(screen, TERRACOTTA, (screenWidth / 2 + 180, screenHeight / 2), 4)
+            pygame.draw.circle(screen, BRASS, (screenWidth / 2 + 220, screenHeight / 2), 14)
+            pygame.draw.circle(screen, CAMEL, (screenWidth / 2 + 260, screenHeight / 2), 12)
+            pygame.draw.circle(screen, POWDERBLUE, (screenWidth / 2 + 300, screenHeight / 2), 10)
+            pygame.draw.circle(screen, ROYALBLUE, (screenWidth / 2 + 340, screenHeight / 2), 10)
+            pygame.draw.circle(screen, CYANBLUE, (screenWidth / 2 + 380, screenHeight / 2), 2)"""
