@@ -1,3 +1,5 @@
+import math
+
 import pygame
 from star_data import star
 from astronomicalObject import astronomicalObject
@@ -29,6 +31,10 @@ CYANBLUE = (52,172,177)
 # Some constants of our solar system in kg or km and the distance to the sun is in Au
 SUN_MASS = 1988500 * (10 ** 24)
 SUN_RADIUS = 695700
+gravConstant = 6.67 * (10 ** (-11))
+
+# Object from the physics class
+physicsCalculator = physicsCalc()
 
 # Useful constants for converting from scientific notation
 exp = 10 ** 24
@@ -50,23 +56,26 @@ screenWidth, screenHeight = 900, 600
 screen = pygame.display.set_mode((screenWidth, screenHeight), pygame.RESIZABLE)
 clock = pygame.time.Clock()
 
+orbitalVel = []
+for planet in planetDict:
+    orbitalVel.append(physicsCalculator.orbitVelocity(SUN_MASS , planetDict[planet][2]))
+
+print(orbitalVel)
+
 # Initialize objects from the astronomicalObject class
-sun = astronomicalObject(SUN_MASS, YELLOW, 20, [0, 0], 0)
-mercury = astronomicalObject(planetDict['mercury'][0], GRAY, 8, [0, 0], planetDict['mercury'][2])
-venus = astronomicalObject(planetDict['venus'][0], BROWN, 8, [0, 0], planetDict['venus'][2])
-earth = astronomicalObject(planetDict['earth'][0], BLUE, 8, [0.000000222879741465499504, 0.000000022879741465499504], planetDict['earth'][2])
-mars = astronomicalObject(planetDict['mars'][0], TERRACOTTA, 8, [0, 0], planetDict['mars'][2])
-jupiter = astronomicalObject(planetDict['jupiter'][0], BRASS, 8, [0, 0], planetDict['jupiter'][2])
-saturn = astronomicalObject(planetDict['saturn'][0], CAMEL, 8, [0, 0], planetDict['saturn'][2])
-uranus = astronomicalObject(planetDict['uranus'][0], POWDERBLUE, 8, [0, 0], planetDict['uranus'][2])
-neptune = astronomicalObject(planetDict['neptune'][0], ROYALBLUE, 8, [0, 0], planetDict['neptune'][2])
-pluto = astronomicalObject(planetDict['pluto'][0], CYANBLUE, 8, [0, 0], planetDict['pluto'][2])
+sun = astronomicalObject(SUN_MASS, YELLOW, 20, 0, 0)
+mercury = astronomicalObject(planetDict['mercury'][0], GRAY, 8, orbitalVel[0], planetDict['mercury'][2])
+venus = astronomicalObject(planetDict['venus'][0], BROWN, 8, orbitalVel[1], planetDict['venus'][2])
+earth = astronomicalObject(planetDict['earth'][0], BLUE, 8, orbitalVel[2], planetDict['earth'][2])
+mars = astronomicalObject(planetDict['mars'][0], TERRACOTTA, 8, orbitalVel[3], planetDict['mars'][2])
+jupiter = astronomicalObject(planetDict['jupiter'][0], BRASS, 8, orbitalVel[4], planetDict['jupiter'][2])
+saturn = astronomicalObject(planetDict['saturn'][0], CAMEL, 8, orbitalVel[5], planetDict['saturn'][2])
+uranus = astronomicalObject(planetDict['uranus'][0], POWDERBLUE, 8, orbitalVel[6], planetDict['uranus'][2])
+neptune = astronomicalObject(planetDict['neptune'][0], ROYALBLUE, 8, orbitalVel[7], planetDict['neptune'][2])
+pluto = astronomicalObject(planetDict['pluto'][0], CYANBLUE, 8, orbitalVel[8], planetDict['pluto'][2])
 
 # List of all the planetary objects
 spaceObjects = [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, pluto]
-
-# Object from the physics class
-physicsCalculator = physicsCalc()
 
 def main():
     #starList = createStars()
@@ -123,16 +132,20 @@ def convertToNotScaleCoords(details, distanceFromSun):
 
 # Calculates forces for each of the planets
 def calculateForces():
-    forceX = 0
-    forceY = 0
-    distance = earth.returnDistance()
-    planet = sun
-    angle = earth.returnAngle()
-    force = physicsCalculator.gravForce(earth.returnMass(), planet.returnMass(), distance, angle)
-    forceX += force[0]
-    forceY += force[1]
-    #print([forceX, forceY])
-    earth.calculateChangeInPos([forceX, forceY])
+    for mainPlanet in spaceObjects:
+        if mainPlanet != sun:
+            forceX = 0
+            forceY = 0
+            distance = mainPlanet.returnDistance()
+            angle = mainPlanet.returnAngle()
+            for planet in spaceObjects:
+                if planet != mainPlanet:
+                    force = physicsCalculator.gravForce(earth.returnMass(), planet.returnMass(), distance, angle)
+                    forceX += force[0]
+                    forceY += force[1]
+            mainPlanet.calculateChangeInPos([forceX, forceY])
+
+
 
 # Initializes the array of star objects
 def createStars():
