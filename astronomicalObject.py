@@ -46,7 +46,7 @@ class astronomicalObject:
     def calculateChangeInPos(self, force):
         accelX = (force[0] / self.mass) / self.convertAUtoM
         accelY = (force[1] / self.mass) / self.convertAUtoM
-        time = 100000
+        time = 10000
         # Formulas for velocity and distance used here by Newton
         self.vel[0] += accelX * time
         self.vel[1] += accelY * time

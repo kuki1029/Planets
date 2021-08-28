@@ -11,12 +11,13 @@ import cv2
 pygame.init()
 pygame.font.init()
 fontMenu = pygame.font.SysFont('segoeui', 50)
+font = pygame.font.SysFont('segoeui', 20)
 
 # Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 DARKPURPLE = (34, 28, 52)
-lIGHTGRAY = (232, 228, 236)
+LIGHTGRAY = (232, 228, 236)
 SPACEBLACK = (5, 8, 25)
 LIGHTBLUE = (175, 201, 255)
 LIGHTORANGE = (255, 217, 178)
@@ -82,10 +83,17 @@ spaceObjects = [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptu
 
 
 def main():
-    # starList = createStars()
+    starList = createStars()
+
+    # Variables that control the screen loops
     mainLoop = True
-    mainSimulation = False
-    menu = True
+    mainSimulationScreen = False
+    menuScreen = True
+    creditScreen = False
+    helpScreen = False
+
+    counter = 0
+
     # Makes the glow effect around sun
     image = pygame.Surface((100, 100), pygame.SRCALPHA)
     pygame.draw.circle(image, YELLOW, (50, 50), 20)
@@ -93,19 +101,29 @@ def main():
     # Main loop that handles all the screens
     while mainLoop:
         # This loop handles the simulation screen
-        while mainSimulation:
-            clock.tick(6000)
+        while mainSimulationScreen:
+            screen_width, screen_height = pygame.display.get_surface().get_size()
+            clock.tick(100)
             screen.fill(SPACEBLACK)
 
             # Events like key presses and mouse movements
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     mainLoop = False
-                    mainSimulation = False
+                    mainSimulationScreen = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        mainSimulationScreen = False
+                        menuScreen = True
 
             drawSpaceObjects()
             calculateForces()
-            # drawStars(starList)
+
+            if counter < 500:
+                textSurface = font.render("Press Esc to go back", True, LIGHTGRAY)
+                screen.blit(textSurface, (0, 0))
+                counter += 1
+
 
             # Creates glow effect around sun
             neon_image = create_neon(image)
@@ -114,13 +132,34 @@ def main():
             pygame.display.update()
 
         # This loops holds the code for the menu screen
-        while menu:
+        while menuScreen:
             screen.fill(SPACEBLACK)
             clock.tick(100)
+            # Variables needed to detect if the mouse is within the buttons
+            buttonWidth = 300
+            buttonLength = 80
+            pos = pygame.mouse.get_pos()
+            x, y = pos[0], pos[1]
+            screen_width, screen_height = pygame.display.get_surface().get_size()
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     mainLoop = False
-                    menu = False
+                    menuScreen = False
+                # Checks if the mouse is within the buttons
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    if (screen_width / 2 - (buttonWidth / 2)) < x < (screen_width / 2 - (buttonWidth / 2) + buttonWidth):
+                        if ((screen_height / 2) - 100) < y < ((screen_height / 2) - 100 + buttonLength):
+                            menuScreen = False
+                            mainSimulationScreen = True
+                        elif (screen_height / 2) < y < ((screen_height / 2) + buttonLength):
+                            menuScreen = False
+                            creditScreen = True
+                        elif ((screen_height / 2) + 100) < y < ((screen_height / 2) + 100 + buttonLength):
+                            menuScreen = False
+                            helpScreen = True
+
+            drawStars(starList)
             drawMenu()
             pygame.display.update()
 
@@ -233,7 +272,7 @@ def drawMenu():
             credits = True
 
     # Menu Text
-    textSurface = fontMenu.render("Physics Simulator", True, lIGHTGRAY)
+    textSurface = fontMenu.render("Physics Simulator", True, LIGHTGRAY)
     w, h = fontMenu.size("Physics Simulator")
     screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2) - 200))
 
@@ -245,8 +284,8 @@ def drawMenu():
         w, h = fontMenu.size(startText)
         screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2) - 100))
     else:
-        pygame.draw.rect(screen, lIGHTGRAY, (screen_width / 2 - (buttonWidth / 2), (screen_height / 2) - 100, buttonWidth, buttonLength), 2, 10)
-        textSurface = fontMenu.render(startText, True, lIGHTGRAY)
+        pygame.draw.rect(screen, LIGHTGRAY, (screen_width / 2 - (buttonWidth / 2), (screen_height / 2) - 100, buttonWidth, buttonLength), 2, 10)
+        textSurface = fontMenu.render(startText, True, LIGHTGRAY)
         w, h = fontMenu.size(startText)
         screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2) - 100))
 
@@ -258,8 +297,8 @@ def drawMenu():
         w, h = fontMenu.size(helpText)
         screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2)))
     else:
-        pygame.draw.rect(screen, lIGHTGRAY, (screen_width / 2 - (buttonWidth / 2), (screen_height / 2), buttonWidth, buttonLength), 2, 10)
-        textSurface = fontMenu.render(helpText, True, lIGHTGRAY)
+        pygame.draw.rect(screen, LIGHTGRAY, (screen_width / 2 - (buttonWidth / 2), (screen_height / 2), buttonWidth, buttonLength), 2, 10)
+        textSurface = fontMenu.render(helpText, True, LIGHTGRAY)
         w, h = fontMenu.size(helpText)
         screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2)))
 
@@ -271,8 +310,8 @@ def drawMenu():
         w, h = fontMenu.size(creditText)
         screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2) + 100))
     else:
-        pygame.draw.rect(screen, lIGHTGRAY, (screen_width / 2 - (buttonWidth / 2), (screen_height / 2)  + 100, buttonWidth, buttonLength), 2, 10)
-        textSurface = fontMenu.render(creditText, True, lIGHTGRAY)
+        pygame.draw.rect(screen, LIGHTGRAY, (screen_width / 2 - (buttonWidth / 2), (screen_height / 2) + 100, buttonWidth, buttonLength), 2, 10)
+        textSurface = fontMenu.render(creditText, True, LIGHTGRAY)
         w, h = fontMenu.size(creditText)
         screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2)  + 100))
 
