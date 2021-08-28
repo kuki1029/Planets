@@ -45,7 +45,7 @@ planetDict = {
     'venus': [4.8675 * exp, 6051.8, 0.72333199],
     'earth': [5.9724 * exp, 6371, 1],
     'mars': [0.64171 * exp, 3389.5, 1.52366231],
-    'jupiter': [1,898.19 * exp, 69911, 5.20336301],
+    'jupiter': [1898.19 * exp, 69911, 5.20336301],
     'saturn': [568.34 * exp, 58232, 9.53707032],
     'uranus': [86.813 * exp, 25362, 19.19126393],
     'neptune': [102.413 * exp, 24622, 30.06896348],
@@ -140,7 +140,7 @@ def calculateForces():
             angle = mainPlanet.returnAngle()
             for planet in spaceObjects:
                 if planet != mainPlanet:
-                    force = physicsCalculator.gravForce(earth.returnMass(), planet.returnMass(), distance, angle)
+                    force = physicsCalculator.gravForce(mainPlanet.returnMass(), planet.returnMass(), distance, angle)
                     forceX += force[0]
                     forceY += force[1]
             mainPlanet.calculateChangeInPos([forceX, forceY])

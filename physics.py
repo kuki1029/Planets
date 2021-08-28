@@ -19,9 +19,7 @@ class physicsCalc:
         force = (self.gravConstant * mass1 * mass2) / (distance ** 2)
         forceX = force * math.cos(angle) * -1
         forceY = force * math.sin(angle) * -1
-        #print(force)
-        #print("angle" + str(angle))
-        #print("force:" + str([forceX, forceY]))
+
         return [forceX, forceY]
 
     def orbitVelocity(self, mass, distance):
