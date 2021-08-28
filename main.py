@@ -7,26 +7,30 @@ from physics import physicsCalc
 import random
 import numpy
 import cv2
+
 pygame.init()
+pygame.font.init()
+fontMenu = pygame.font.SysFont('segoeui', 50)
 
 # Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-SPACEBLACK = (5,8,25)
+DARKPURPLE = (34, 28, 52)
+lIGHTGRAY = (232, 228, 236)
+SPACEBLACK = (5, 8, 25)
 LIGHTBLUE = (175, 201, 255)
 LIGHTORANGE = (255, 217, 178)
 STARCOLORS = [WHITE, LIGHTORANGE, LIGHTBLUE]
 YELLOW = (253, 184, 19)
 GRAY = (151, 151, 159)
-BROWN = (195,132,42)
-BLUE = (0,107,216)
+BROWN = (195, 132, 42)
+BLUE = (0, 107, 216)
 TERRACOTTA = (226, 123, 88)
 BRASS = (211, 156, 126)
 CAMEL = (195, 161, 113)
 POWDERBLUE = (213, 251, 252)
 ROYALBLUE = (62, 84, 232)
-CYANBLUE = (52,172,177)
-
+CYANBLUE = (52, 172, 177)
 
 # Some constants of our solar system in kg or km and the distance to the sun is in Au
 SUN_MASS = 1988500 * (10 ** 24)
@@ -56,11 +60,10 @@ screenWidth, screenHeight = 900, 600
 screen = pygame.display.set_mode((screenWidth, screenHeight), pygame.RESIZABLE)
 clock = pygame.time.Clock()
 
+# Calculates the orbital speed for all the planets
 orbitalVel = []
 for planet in planetDict:
-    orbitalVel.append(physicsCalculator.orbitVelocity(SUN_MASS , planetDict[planet][2]))
-
-print(orbitalVel)
+    orbitalVel.append(physicsCalculator.orbitVelocity(SUN_MASS, planetDict[planet][2]))
 
 # Initialize objects from the astronomicalObject class
 sun = astronomicalObject(SUN_MASS, YELLOW, 20, 0, 0)
@@ -77,17 +80,18 @@ pluto = astronomicalObject(planetDict['pluto'][0], CYANBLUE, 8, orbitalVel[8], p
 # List of all the planetary objects
 spaceObjects = [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, pluto]
 
+
 def main():
-    #starList = createStars()
+    # starList = createStars()
     mainLoop = True
-    mainSimulation = True
+    mainSimulation = False
+    menu = True
     # Makes the glow effect around sun
     image = pygame.Surface((100, 100), pygame.SRCALPHA)
-    pygame.draw.circle(image, YELLOW, (50,50), 20)
+    pygame.draw.circle(image, YELLOW, (50, 50), 20)
 
     # Main loop that handles all the screens
     while mainLoop:
-
         # This loop handles the simulation screen
         while mainSimulation:
             clock.tick(6000)
@@ -101,13 +105,25 @@ def main():
 
             drawSpaceObjects()
             calculateForces()
-            #drawStars(starList)
+            # drawStars(starList)
 
             # Creates glow effect around sun
             neon_image = create_neon(image)
             screen.blit(neon_image, neon_image.get_rect(center=screen.get_rect().center),
                         special_flags=pygame.BLEND_PREMULTIPLIED)
             pygame.display.update()
+
+        # This loops holds the code for the menu screen
+        while menu:
+            screen.fill(SPACEBLACK)
+            clock.tick(100)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    mainLoop = False
+                    menu = False
+            drawMenu()
+            pygame.display.update()
+
 
 # Draws the planets and any other space objects
 def drawSpaceObjects():
@@ -122,6 +138,7 @@ def drawSpaceObjects():
             pygame.draw.circle(screen, details[1], pos, details[2])
             distanceFromSunScaled += widthOrbits
 
+
 # Converts the Au distances to pixel values that are scaled to be easier to view on screen
 def convertToNotScaleCoords(details, distanceFromSun):
     factor = distanceFromSun / details[3]
@@ -129,6 +146,7 @@ def convertToNotScaleCoords(details, distanceFromSun):
     x = (screenWidth / 2) + (factor * details[0][0])
     y = (screenHeight / 2) + (factor * details[0][1])
     return (x, y)
+
 
 # Calculates forces for each of the planets
 def calculateForces():
@@ -146,7 +164,6 @@ def calculateForces():
             mainPlanet.calculateChangeInPos([forceX, forceY])
 
 
-
 # Initializes the array of star objects
 def createStars():
     # Creates an array of 100 elements
@@ -158,20 +175,21 @@ def createStars():
         # Some parameters for the stars
         posX = random.randint(0, 2000)
         posY = random.randint(0, 2000)
-        size = random.randint(0,2)
+        size = random.randint(0, 2)
         color = random.choice(STARCOLORS)
         flicker = False
         # These next two if statements allow a chance for the stars to flicker or move
-        if random.randint(0,100) < chanceOfFlickering:
+        if random.randint(0, 100) < chanceOfFlickering:
             flicker = True
         speedX = 0
         speedY = 0
-        if random.randint(0,100) < chanceOfMovingStars:
-            speedX = random.randint(-50,50) / 100
-            speedY = random.randint(-50,50) / 100
+        if random.randint(0, 100) < chanceOfMovingStars:
+            speedX = random.randint(-50, 50) / 100
+            speedY = random.randint(-50, 50) / 100
         starList[x] = star([posX, posY], size, color, flicker, [speedX, speedY])
 
     return starList
+
 
 # Draws the stars based on the properties from the star_data class
 def drawStars(starList):
@@ -180,6 +198,7 @@ def drawStars(starList):
         size = starList[x].returnSize()
         color = starList[x].returnColor()
         pygame.draw.circle(screen, color, (pos[0], pos[1]), size)
+
 
 # This helps to create a glow around the objects that make them look a bit more pleasant to the eyes
 def create_neon(surf):
@@ -192,10 +211,75 @@ def create_neon(surf):
     bloom_surf = pygame.image.frombuffer(image.flatten(), image.shape[1::-1], 'RGBA')
     return bloom_surf
 
+
+# Draws the menu buttons
+def drawMenu():
+    buttonWidth = 300
+    buttonLength = 80
+    pos = pygame.mouse.get_pos()
+    x, y = pos[0], pos[1]
+    screen_width, screen_height = pygame.display.get_surface().get_size()
+    startButton = False
+    help = False
+    credits = False
+
+    # Checks where the mouse is and enables the corresponding buttons
+    if (screen_width / 2 - (buttonWidth / 2)) < x < (screen_width / 2 - (buttonWidth / 2) + buttonWidth):
+        if ((screen_height / 2) - 100) < y < ((screen_height / 2) - 100 + buttonLength):
+            startButton = True
+        elif (screen_height / 2) < y < ((screen_height / 2) + buttonLength):
+            help = True
+        elif ((screen_height / 2) + 100) < y < ((screen_height / 2) + 100 + buttonLength):
+            credits = True
+
+    # Menu Text
+    textSurface = fontMenu.render("Physics Simulator", True, lIGHTGRAY)
+    w, h = fontMenu.size("Physics Simulator")
+    screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2) - 200))
+
+    # Start Button
+    startText = "Start!"
+    if startButton:
+        pygame.draw.rect(screen, WHITE, (screen_width / 2 - (buttonWidth / 2), (screen_height / 2) - 100, buttonWidth, buttonLength), 0, 10)
+        textSurface = fontMenu.render(startText, True, BLACK)
+        w, h = fontMenu.size(startText)
+        screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2) - 100))
+    else:
+        pygame.draw.rect(screen, lIGHTGRAY, (screen_width / 2 - (buttonWidth / 2), (screen_height / 2) - 100, buttonWidth, buttonLength), 2, 10)
+        textSurface = fontMenu.render(startText, True, lIGHTGRAY)
+        w, h = fontMenu.size(startText)
+        screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2) - 100))
+
+    # Help Button
+    helpText = "Help"
+    if help:
+        pygame.draw.rect(screen, WHITE, (screen_width / 2 - (buttonWidth / 2), (screen_height / 2), buttonWidth, buttonLength), 0, 10)
+        textSurface = fontMenu.render(helpText, True, BLACK)
+        w, h = fontMenu.size(helpText)
+        screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2)))
+    else:
+        pygame.draw.rect(screen, lIGHTGRAY, (screen_width / 2 - (buttonWidth / 2), (screen_height / 2), buttonWidth, buttonLength), 2, 10)
+        textSurface = fontMenu.render(helpText, True, lIGHTGRAY)
+        w, h = fontMenu.size(helpText)
+        screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2)))
+
+    # Credits Button
+    creditText = "Credits"
+    if credits:
+        pygame.draw.rect(screen, WHITE, (screen_width / 2 - (buttonWidth / 2), (screen_height / 2) + 100, buttonWidth, buttonLength), 0, 10)
+        textSurface = fontMenu.render(creditText, True, BLACK)
+        w, h = fontMenu.size(creditText)
+        screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2) + 100))
+    else:
+        pygame.draw.rect(screen, lIGHTGRAY, (screen_width / 2 - (buttonWidth / 2), (screen_height / 2)  + 100, buttonWidth, buttonLength), 2, 10)
+        textSurface = fontMenu.render(creditText, True, lIGHTGRAY)
+        w, h = fontMenu.size(creditText)
+        screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2)  + 100))
+
+
 main()
 
-
-#pygame.draw.circle(screen, YELLOW, (screenWidth/2, screenHeight/2), 20)
+# pygame.draw.circle(screen, YELLOW, (screenWidth/2, screenHeight/2), 20)
 """pygame.draw.circle(screen, GRAY, (screenWidth / 2 + 60, screenHeight / 2), 4)
             pygame.draw.circle(screen, BROWN, (screenWidth/2 + 100, screenHeight/2), 6)
             pygame.draw.circle(screen, BLUE, (screenWidth / 2 + 140, screenHeight / 2), 8)
