@@ -11,7 +11,9 @@ import cv2
 pygame.init()
 pygame.font.init()
 fontMenu = pygame.font.SysFont('segoeui', 50)
-font = pygame.font.SysFont('segoeui', 20)
+font = pygame.font.SysFont('segoeui', 35)
+fontSmall = pygame.font.SysFont('segoeui', 20)
+pygame.display.set_caption("Physics Simulator")
 
 # Colors
 WHITE = (255, 255, 255)
@@ -87,8 +89,10 @@ def main():
 
     # Variables that control the screen loops
     mainLoop = True
-    mainSimulationScreen = False
+    SolarSystemSimulationScreen = False
+    gravitySimulation = False
     menuScreen = True
+    secondMenuScreen = False
     creditScreen = False
     helpScreen = False
 
@@ -101,8 +105,8 @@ def main():
     # Main loop that handles all the screens
     while mainLoop:
         # This loop handles the simulation screen
-        while mainSimulationScreen:
-            screen_width, screen_height = pygame.display.get_surface().get_size()
+        counter = 0
+        while SolarSystemSimulationScreen:
             clock.tick(100)
             screen.fill(SPACEBLACK)
 
@@ -110,17 +114,17 @@ def main():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     mainLoop = False
-                    mainSimulationScreen = False
+                    SolarSystemSimulationScreen = False
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        mainSimulationScreen = False
+                        SolarSystemSimulationScreen = False
                         menuScreen = True
 
             drawSpaceObjects()
             calculateForces()
 
             if counter < 500:
-                textSurface = font.render("Press Esc to go back", True, LIGHTGRAY)
+                textSurface = fontSmall.render("Press Esc to go back", True, LIGHTGRAY)
                 screen.blit(textSurface, (0, 0))
                 counter += 1
 
@@ -131,7 +135,25 @@ def main():
                         special_flags=pygame.BLEND_PREMULTIPLIED)
             pygame.display.update()
 
+
+        # Loop that handles the gravity simulations
+        counter = 0
+        while gravitySimulation:
+            clock.tick(100)
+            screen.fill(SPACEBLACK)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    mainLoop = False
+                    gravitySimulation = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        gravitySimulation = False
+                        menuScreen = True
+            pygame.display.update()
+
+
         # This loops holds the code for the menu screen
+        counter = 0
         while menuScreen:
             screen.fill(SPACEBLACK)
             clock.tick(100)
@@ -151,7 +173,7 @@ def main():
                     if (screen_width / 2 - (buttonWidth / 2)) < x < (screen_width / 2 - (buttonWidth / 2) + buttonWidth):
                         if ((screen_height / 2) - 100) < y < ((screen_height / 2) - 100 + buttonLength):
                             menuScreen = False
-                            mainSimulationScreen = True
+                            secondMenuScreen = True
                         elif (screen_height / 2) < y < ((screen_height / 2) + buttonLength):
                             menuScreen = False
                             creditScreen = True
@@ -159,9 +181,55 @@ def main():
                             menuScreen = False
                             helpScreen = True
 
+
             drawStars(starList)
             drawMenu()
             pygame.display.update()
+
+        counter = 0
+        # Displays the second menu screen with more detailed options
+        while secondMenuScreen:
+            screen.fill(SPACEBLACK)
+            clock.tick(100)
+            # Variables needed to detect if the mouse is within the buttons
+            buttonWidth = 300
+            buttonLength = 80
+            pos = pygame.mouse.get_pos()
+            x, y = pos[0], pos[1]
+            screen_width, screen_height = pygame.display.get_surface().get_size()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    mainLoop = False
+                    secondMenuScreen = False
+                # Checks if the mouse is within the buttons
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    if (screen_width / 2 - (buttonWidth / 2)) < x < (screen_width / 2 - (buttonWidth / 2) + buttonWidth):
+                        if ((screen_height / 2) - 100) < y < ((screen_height / 2) - 100 + buttonLength):
+                            secondMenuScreen = False
+                            SolarSystemSimulationScreen = True
+                        elif (screen_height / 2) < y < ((screen_height / 2) + buttonLength):
+                            secondMenuScreen = False
+                            gravitySimulation = True
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        secondMenuScreen = False
+                        menuScreen = True
+
+            if counter < 500:
+                textSurface = fontSmall.render("Press Esc to go back", True, LIGHTGRAY)
+                screen.blit(textSurface, (0, 0))
+                counter += 1
+
+            drawStars(starList)
+            drawSecondMenu()
+            pygame.display.update()
+
+        while creditScreen:
+            pass
+
+        while helpScreen:
+            pass
 
 
 # Draws the planets and any other space objects
@@ -315,6 +383,62 @@ def drawMenu():
         w, h = fontMenu.size(creditText)
         screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2)  + 100))
 
+# Draws the secondary set of buttons
+def drawSecondMenu():
+    buttonWidth = 300
+    buttonLength = 80
+    pos = pygame.mouse.get_pos()
+    x, y = pos[0], pos[1]
+    screen_width, screen_height = pygame.display.get_surface().get_size()
+    solarSim = False
+    gravSim = False
+
+    # Checks where the mouse is and enables the corresponding buttons
+    if (screen_width / 2 - (buttonWidth / 2)) < x < (screen_width / 2 - (buttonWidth / 2) + buttonWidth):
+        if ((screen_height / 2) - 100) < y < ((screen_height / 2) - 100 + buttonLength):
+            solarSim = True
+        elif (screen_height / 2) < y < ((screen_height / 2) + buttonLength):
+            gravSim = True
+
+
+    # Menu Text
+    textSurface = fontMenu.render("Physics Simulator", True, LIGHTGRAY)
+    w, h = fontMenu.size("Physics Simulator")
+    screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2) - 200))
+
+    # Solar System Button
+    solarSimText = "Solar System"
+    if solarSim:
+        pygame.draw.rect(screen, WHITE,
+                         (screen_width / 2 - (buttonWidth / 2), (screen_height / 2) - 100, buttonWidth, buttonLength),
+                         0, 10)
+        textSurface = font.render(solarSimText, True, BLACK)
+        w, h = font.size(solarSimText)
+        screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2) - 100 + (h/3)))
+    else:
+        pygame.draw.rect(screen, LIGHTGRAY,
+                         (screen_width / 2 - (buttonWidth / 2), (screen_height / 2) - 100, buttonWidth, buttonLength),
+                         2, 10)
+        textSurface = font.render(solarSimText, True, LIGHTGRAY)
+        w, h = font.size(solarSimText)
+        screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2) - 100 + (h/3)))
+
+    # Gravity Simulator
+    gravSimText = "Gravity Simulator!"
+    if gravSim:
+        pygame.draw.rect(screen, WHITE,
+                         (screen_width / 2 - (buttonWidth / 2), (screen_height / 2), buttonWidth, buttonLength),
+                         0, 10)
+        textSurface = font.render(gravSimText, True, BLACK)
+        w, h = font.size(gravSimText)
+        screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2) + (h/3)))
+    else:
+        pygame.draw.rect(screen, LIGHTGRAY,
+                         (screen_width / 2 - (buttonWidth / 2), (screen_height / 2), buttonWidth, buttonLength),
+                         2, 10)
+        textSurface = font.render(gravSimText, True, LIGHTGRAY)
+        w, h = font.size(gravSimText)
+        screen.blit(textSurface, (screen_width / 2 - (w / 2), (screen_height / 2) + (h/3)))
 
 main()
 
