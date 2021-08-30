@@ -10,8 +10,11 @@ class physicsCalc:
     # Constructor
     # Mass is in kg and distance in km
     def __init__(self, solarSystem):
+        # We set these parameters to 1 as we aren't dealing with real world scales for the gravity simulation
+        # These modified numbers allow for faster processing and makes it easier for the user to play around with the objects
         if not solarSystem:
             self.convertAUtoM = 1
+            self.gravConstant = 1
 
     # Calculates the x and y component of the force between two planets
     def gravForce(self, mass1, mass2, distance, angle):
