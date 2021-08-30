@@ -5,19 +5,27 @@ class astronomicalObject:
 
     convertAUtoM = 1.496 * (10 ** 11)
     convertAUtoPixel = 100              # 1 Au = 100 Px
+    time = 10000
 
     # Constructor
     # Mass is in kg
     # Size is in km and is the radius of the object
     # Speed will be in m/s
     # InitialPosition is the distance from the sun in Au
-    def __init__(self, mass, color, size, initialSpeed, initialPos):
+    def __init__(self, mass, color, size, initialSpeed, initialPos, solarSystem):
         self.mass = mass
         self.color = color
         self.size = size
         self.vel = initialSpeed
-        self.assignRandomStart(initialPos)
-        self.vel = self.calcVelComponent(initialSpeed)
+
+        if not solarSystem:
+            self.convertAUtoM = 1
+            self.time = 1
+            self.pos = initialPos
+            self.distance = math.sqrt( (initialPos[0] ** 2) + (initialPos[1] ** 2))
+        else:
+            self.assignRandomStart(initialPos)
+            self.vel = self.calcVelComponent(initialSpeed)
 
 
 
@@ -37,7 +45,6 @@ class astronomicalObject:
         angle = math.radians(self.returnAngle() + 90)
         velX = (-1 * (math.cos(angle) * vel)) / self.convertAUtoM
         velY = (-1 * (math.sin(angle) * vel)) / self.convertAUtoM
-        print(velX, velY)
         return [velX, velY]
 
 
@@ -46,13 +53,12 @@ class astronomicalObject:
     def calculateChangeInPos(self, force):
         accelX = (force[0] / self.mass) / self.convertAUtoM
         accelY = (force[1] / self.mass) / self.convertAUtoM
-        time = 10000
         # Formulas for velocity and distance used here by Newton
-        self.vel[0] += accelX * time
-        self.vel[1] += accelY * time
+        self.vel[0] += accelX * self.time
+        self.vel[1] += accelY * self.time
 
-        self.pos[0] = self.pos[0] + (self.vel[0] * time) - ((0.5 * accelX) * (time ** 2))
-        self.pos[1] = self.pos[1] + (self.vel[1] * time) - ((0.5 * accelY) * (time ** 2))
+        self.pos[0] = self.pos[0] + (self.vel[0] * self.time) - ((0.5 * accelX) * (self.time ** 2))
+        self.pos[1] = self.pos[1] + (self.vel[1] * self.time) - ((0.5 * accelY) * (self.time ** 2))
 
 
     # Returns the details needed to draw the objects

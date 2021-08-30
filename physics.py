@@ -9,8 +9,9 @@ class physicsCalc:
 
     # Constructor
     # Mass is in kg and distance in km
-    def __init__(self):
-        pass
+    def __init__(self, solarSystem):
+        if not solarSystem:
+            self.convertAUtoM = 1
 
     # Calculates the x and y component of the force between two planets
     def gravForce(self, mass1, mass2, distance, angle):

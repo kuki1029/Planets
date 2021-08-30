@@ -34,6 +34,7 @@ CAMEL = (195, 161, 113)
 POWDERBLUE = (213, 251, 252)
 ROYALBLUE = (62, 84, 232)
 CYANBLUE = (52, 172, 177)
+RED = (176,64,64)
 
 # Some constants of our solar system in kg or km and the distance to the sun is in Au
 SUN_MASS = 1988500 * (10 ** 24)
@@ -41,7 +42,8 @@ SUN_RADIUS = 695700
 gravConstant = 6.67 * (10 ** (-11))
 
 # Object from the physics class
-physicsCalculator = physicsCalc()
+physicsSolarSimCalculator = physicsCalc(True)
+physicsObjectsCalc = physicsCalc(False)
 
 # Useful constants for converting from scientific notation
 exp = 10 ** 24
@@ -66,23 +68,22 @@ clock = pygame.time.Clock()
 # Calculates the orbital speed for all the planets
 orbitalVel = []
 for planet in planetDict:
-    orbitalVel.append(physicsCalculator.orbitVelocity(SUN_MASS, planetDict[planet][2]))
+    orbitalVel.append(physicsSolarSimCalculator.orbitVelocity(SUN_MASS, planetDict[planet][2]))
 
 # Initialize objects from the astronomicalObject class
-sun = astronomicalObject(SUN_MASS, YELLOW, 20, 0, 0)
-mercury = astronomicalObject(planetDict['mercury'][0], GRAY, 8, orbitalVel[0], planetDict['mercury'][2])
-venus = astronomicalObject(planetDict['venus'][0], BROWN, 8, orbitalVel[1], planetDict['venus'][2])
-earth = astronomicalObject(planetDict['earth'][0], BLUE, 8, orbitalVel[2], planetDict['earth'][2])
-mars = astronomicalObject(planetDict['mars'][0], TERRACOTTA, 8, orbitalVel[3], planetDict['mars'][2])
-jupiter = astronomicalObject(planetDict['jupiter'][0], BRASS, 8, orbitalVel[4], planetDict['jupiter'][2])
-saturn = astronomicalObject(planetDict['saturn'][0], CAMEL, 8, orbitalVel[5], planetDict['saturn'][2])
-uranus = astronomicalObject(planetDict['uranus'][0], POWDERBLUE, 8, orbitalVel[6], planetDict['uranus'][2])
-neptune = astronomicalObject(planetDict['neptune'][0], ROYALBLUE, 8, orbitalVel[7], planetDict['neptune'][2])
-pluto = astronomicalObject(planetDict['pluto'][0], CYANBLUE, 8, orbitalVel[8], planetDict['pluto'][2])
+sun = astronomicalObject(SUN_MASS, YELLOW, 20, 0, 0, True)
+mercury = astronomicalObject(planetDict['mercury'][0], GRAY, 8, orbitalVel[0], planetDict['mercury'][2], True)
+venus = astronomicalObject(planetDict['venus'][0], BROWN, 8, orbitalVel[1], planetDict['venus'][2], True)
+earth = astronomicalObject(planetDict['earth'][0], BLUE, 8, orbitalVel[2], planetDict['earth'][2], True)
+mars = astronomicalObject(planetDict['mars'][0], TERRACOTTA, 8, orbitalVel[3], planetDict['mars'][2], True)
+jupiter = astronomicalObject(planetDict['jupiter'][0], BRASS, 8, orbitalVel[4], planetDict['jupiter'][2], True)
+saturn = astronomicalObject(planetDict['saturn'][0], CAMEL, 8, orbitalVel[5], planetDict['saturn'][2], True)
+uranus = astronomicalObject(planetDict['uranus'][0], POWDERBLUE, 8, orbitalVel[6], planetDict['uranus'][2], True)
+neptune = astronomicalObject(planetDict['neptune'][0], ROYALBLUE, 8, orbitalVel[7], planetDict['neptune'][2], True)
+pluto = astronomicalObject(planetDict['pluto'][0], CYANBLUE, 8, orbitalVel[8], planetDict['pluto'][2], True)
 
 # List of all the planetary objects
 spaceObjects = [sun, mercury, venus, earth, mars, jupiter, saturn, uranus, neptune, pluto]
-
 
 def main():
     starList = createStars()
@@ -90,8 +91,8 @@ def main():
     # Variables that control the screen loops
     mainLoop = True
     SolarSystemSimulationScreen = False
-    gravitySimulation = False
-    menuScreen = True
+    gravitySimulation = True
+    menuScreen = False
     secondMenuScreen = False
     creditScreen = False
     helpScreen = False
@@ -138,9 +139,16 @@ def main():
 
         # Loop that handles the gravity simulations
         counter = 0
+        sizeObject = 1
+        density = 10
+        userCreatedObjects = [astronomicalObject(9999999999999, RED, 30, [0, 0], [0, 0], False)]
+        mouse = False
         while gravitySimulation:
+            x, y = pygame.mouse.get_pos()
             clock.tick(100)
             screen.fill(SPACEBLACK)
+            screen_width, screen_height = pygame.display.get_surface().get_size()
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     mainLoop = False
@@ -149,6 +157,26 @@ def main():
                     if event.key == pygame.K_ESCAPE:
                         gravitySimulation = False
                         menuScreen = True
+                # Gives us the speed of the mouse relative to its last position
+                if mouse and event.type == pygame.MOUSEMOTION:
+                        dx, dy = event.rel
+                if event.type == pygame.MOUSEBUTTONUP:
+                    distanceX = (x - (screen_width/2))
+                    distanceY = (y - (screen_height/2))
+                    userCreatedObjects.append(astronomicalObject(sizeObject * density, WHITE, sizeObject, [dx, dy], [distanceX, distanceY], False))
+
+            click = pygame.mouse.get_pressed()
+            if click[0]:
+                sizeObject += 0.2
+                mouse = True
+            if not click[0]:
+                sizeObject = 0
+                mouse = False
+
+            if mouse:
+                pygame.draw.circle(screen, WHITE, [x, y], sizeObject)
+            drawUserObjects(userCreatedObjects)
+            calculateUserObjectForce(userCreatedObjects)
             pygame.display.update()
 
 
@@ -254,6 +282,30 @@ def convertToNotScaleCoords(details, distanceFromSun):
     y = (screenHeight / 2) + (factor * details[0][1])
     return (x, y)
 
+def drawUserObjects(userCreatedObjects):
+    for object in userCreatedObjects:
+        screenWidth, screenHeight = pygame.display.get_surface().get_size()
+        details = object.returnDrawDetails()
+        x = details[0][0] + (screenWidth / 2)
+        y = details[0][1] + (screenHeight / 2)
+        pygame.draw.circle(screen, details[1], (x, y), details[2])
+
+def calculateUserObjectForce(userCreatedObjects):
+    for mainObject in userCreatedObjects:
+        forceX = 0
+        forceY = 0
+        x, y = mainObject.returnCoords()
+        angle = mainObject.returnAngle()
+        for object in userCreatedObjects:
+            x2, y2 = object.returnCoords()
+            distance = math.sqrt(((x - x2) ** 2) + ((y - y2) ** 2))
+            if object != mainObject:
+                force = physicsObjectsCalc.gravForce(mainObject.returnMass(), object.returnMass(), distance, angle)
+                forceX += force[0]
+                forceY += force[1]
+                print(force)
+        mainObject.calculateChangeInPos([forceX, forceY])
+
 
 # Calculates forces for each of the planets
 def calculateForces():
@@ -261,11 +313,13 @@ def calculateForces():
         if mainPlanet != sun:
             forceX = 0
             forceY = 0
-            distance = mainPlanet.returnDistance()
+            x, y = mainPlanet.returnCoords()
             angle = mainPlanet.returnAngle()
             for planet in spaceObjects:
+                x2, y2 = planet.returnCoords()
+                distance = math.sqrt( ((x - x2) ** 2) + ((y - y2) ** 2))
                 if planet != mainPlanet:
-                    force = physicsCalculator.gravForce(mainPlanet.returnMass(), planet.returnMass(), distance, angle)
+                    force = physicsSolarSimCalculator.gravForce(mainPlanet.returnMass(), planet.returnMass(), distance, angle)
                     forceX += force[0]
                     forceY += force[1]
             mainPlanet.calculateChangeInPos([forceX, forceY])
