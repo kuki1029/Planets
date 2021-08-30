@@ -111,7 +111,7 @@ def main():
             clock.tick(100)
             screen.fill(SPACEBLACK)
 
-            # Events like key presses and mouse movements
+            # Events like key presses and mouseHeld movements
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     mainLoop = False
@@ -141,12 +141,14 @@ def main():
         counter = 0
         sizeObject = 1
         density = 10
-        userCreatedObjects = [astronomicalObject(9999999999999, RED, 30, [0, 0], [0, 0], False)]
-        mouse = False
+        userCreatedObjects = [astronomicalObject(100000, RED, 30, [0, 0], [0, 0], False)]
+        mouseHeld = False
+        color = WHITE
         while gravitySimulation:
             x, y = pygame.mouse.get_pos()
             clock.tick(100)
             screen.fill(SPACEBLACK)
+            dx, dy = 0, 0
             screen_width, screen_height = pygame.display.get_surface().get_size()
 
             for event in pygame.event.get():
@@ -157,24 +159,37 @@ def main():
                     if event.key == pygame.K_ESCAPE:
                         gravitySimulation = False
                         menuScreen = True
-                # Gives us the speed of the mouse relative to its last position
-                if mouse and event.type == pygame.MOUSEMOTION:
-                        dx, dy = event.rel
+                    # If the number keys are pressed, it makes the created objects more heavy
+                    elif event.key == pygame.K_1:
+                        density = 10
+                        color = WHITE
+                    elif event.key == pygame.K_2:
+                        density = 20
+                        color = RED
+                    elif event.key == pygame.K_3:
+                        density = 50
+                        color = CYANBLUE
+                # Gives us the speed of the mouseHeld relative to its last position
+                if mouseHeld and event.type == pygame.MOUSEMOTION:
+                    dx, dy = event.rel
+                # Creates a new object from the astronomical object class when the user is no longer clicking the mouseHeld
                 if event.type == pygame.MOUSEBUTTONUP:
                     distanceX = (x - (screen_width/2))
                     distanceY = (y - (screen_height/2))
-                    userCreatedObjects.append(astronomicalObject(sizeObject * density, WHITE, sizeObject, [dx, dy], [distanceX, distanceY], False))
+                    userCreatedObjects.append(astronomicalObject(sizeObject * density, color, sizeObject, [dx, dy], [distanceX, distanceY], False))
 
+            # IF user if holding down the mouseHeld, it creates a circle on the screen
             click = pygame.mouse.get_pressed()
             if click[0]:
-                sizeObject += 0.2
-                mouse = True
+                sizeObject += 0.5
+                mouseHeld = True
             if not click[0]:
-                sizeObject = 0
-                mouse = False
+                sizeObject = 0.5
+                mouseHeld = False
 
-            if mouse:
-                pygame.draw.circle(screen, WHITE, [x, y], sizeObject)
+            # IF the mouseHeld is held, a circle is created
+            if mouseHeld:
+                pygame.draw.circle(screen, color, [x, y], sizeObject)
             drawUserObjects(userCreatedObjects)
             calculateUserObjectForce(userCreatedObjects)
             pygame.display.update()
@@ -185,7 +200,7 @@ def main():
         while menuScreen:
             screen.fill(SPACEBLACK)
             clock.tick(100)
-            # Variables needed to detect if the mouse is within the buttons
+            # Variables needed to detect if the mouseHeld is within the buttons
             buttonWidth = 300
             buttonLength = 80
             pos = pygame.mouse.get_pos()
@@ -196,7 +211,7 @@ def main():
                 if event.type == pygame.QUIT:
                     mainLoop = False
                     menuScreen = False
-                # Checks if the mouse is within the buttons
+                # Checks if the mouseHeld is within the buttons
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if (screen_width / 2 - (buttonWidth / 2)) < x < (screen_width / 2 - (buttonWidth / 2) + buttonWidth):
                         if ((screen_height / 2) - 100) < y < ((screen_height / 2) - 100 + buttonLength):
@@ -219,7 +234,7 @@ def main():
         while secondMenuScreen:
             screen.fill(SPACEBLACK)
             clock.tick(100)
-            # Variables needed to detect if the mouse is within the buttons
+            # Variables needed to detect if the mouseHeld is within the buttons
             buttonWidth = 300
             buttonLength = 80
             pos = pygame.mouse.get_pos()
@@ -230,7 +245,7 @@ def main():
                 if event.type == pygame.QUIT:
                     mainLoop = False
                     secondMenuScreen = False
-                # Checks if the mouse is within the buttons
+                # Checks if the mouseHeld is within the buttons
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if (screen_width / 2 - (buttonWidth / 2)) < x < (screen_width / 2 - (buttonWidth / 2) + buttonWidth):
                         if ((screen_height / 2) - 100) < y < ((screen_height / 2) - 100 + buttonLength):
@@ -282,14 +297,17 @@ def convertToNotScaleCoords(details, distanceFromSun):
     y = (screenHeight / 2) + (factor * details[0][1])
     return (x, y)
 
+# Draws objects created by the user
 def drawUserObjects(userCreatedObjects):
     for object in userCreatedObjects:
         screenWidth, screenHeight = pygame.display.get_surface().get_size()
         details = object.returnDrawDetails()
+        # Finds appropraite coordinates relative to the center of the screen
         x = details[0][0] + (screenWidth / 2)
         y = details[0][1] + (screenHeight / 2)
         pygame.draw.circle(screen, details[1], (x, y), details[2])
 
+# Calculates force for the user created objects
 def calculateUserObjectForce(userCreatedObjects):
     for mainObject in userCreatedObjects:
         forceX = 0
@@ -303,7 +321,6 @@ def calculateUserObjectForce(userCreatedObjects):
                 force = physicsObjectsCalc.gravForce(mainObject.returnMass(), object.returnMass(), distance, angle)
                 forceX += force[0]
                 forceY += force[1]
-                print(force)
         mainObject.calculateChangeInPos([forceX, forceY])
 
 

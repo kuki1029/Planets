@@ -18,6 +18,9 @@ class astronomicalObject:
         self.size = size
         self.vel = initialSpeed
 
+        # If we are not dealing with the solarsystem, we modify some of the real world constants as it makes the
+        # calculations easier and takes less time. Also real world scale isn't needed when dealing with
+        # the gravity simulator
         if not solarSystem:
             self.convertAUtoM = 1
             self.time = 1
